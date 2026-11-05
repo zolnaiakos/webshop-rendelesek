@@ -12,9 +12,14 @@ router.get('/', async(req,res)=>{
     let params = []
 
     if(statusz){
-        sql1 += 'WHERE r.statusz = ?'
+        sql1 += "WHERE r.statusz = ?"
         params.push(statusz)
     }
+
+
+    sql1 += 'GROUP BY r.id, r.vasarlo_id, v.nev, r.datum, r.statusz ORDER BY r.datum'
+    
+
    
 
     const [eredmeny] = await pool.query(sql1, params)
