@@ -45,9 +45,20 @@ router.get('/', async(req,res)=>{
 
     const [eredmeny] = await pool.query(sql1, params)
     
+    //GET /rendelesek?tol=2026-02-30 kell még
+
     
 
     res.json(eredmeny);
 })
+
+
+router.get('/:id', async(req,res)=>{
+
+    let sql1 = 'SELECT r.id, r.datum , r.statusz, v.id AS vasarlo_id , v.nev, v.email, v.varos FROM rendelesek r LEFT JOIN vasarlok v ON r.vasarlo_id = v.id '
+
+
+})
+
 
 export default router
