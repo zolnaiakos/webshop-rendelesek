@@ -12,34 +12,36 @@ router.get('/', async(req,res)=>{
     let {tol, ig} = req.query
     
     let params = []
-    let params2 = []
+    let feltetel = []
 
 
     // csak 1 rendelést ad vissza
     if(statusz){
-        sql1 += "WHERE statusz = ?"
-        params.push(statusz)
+        params.push("statusz = ?")
+        feltetel.push(statusz)
     }
 
-
-     sql1 += 'ORDER BY r.datum'
-    
-
-
-    if(tol !== undefined && ig !== undefined && Number (tol) > Number (ig)){
+    if(tol && ig  && (tol) > (ig)){
         [tol,ig] = [ig,tol]
     }
 
     if(tol){
-        params.push(Number(tol))
-        params2.push('r.datum >= ?')
+        params.push(tol)
+        feltetel.push('r.datum >= ?')
     }
 
     if(ig){
-        params.push(Number(ig))
-        params2.push('r.datum <= ?')
+        params.push(ig)
+        feltetel.push('r.datum <= ?')
     }
    
+
+    if(feltetel.length >0){
+        sql1 += " WHERE " +feltetel.join(" AND ");
+    }
+
+
+    sql1 += " GROUP BY r.id ORDER BY r.datum"
 
     const [eredmeny] = await pool.query(sql1, params)
     
