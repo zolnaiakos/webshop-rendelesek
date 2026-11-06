@@ -55,10 +55,39 @@ router.get('/', async(req,res)=>{
 
 router.get('/:id', async(req,res)=>{
 
-    let sql1 = 'SELECT r.id, r.datum , r.statusz, v.id AS vasarlo_id , v.nev, v.email, v.varos FROM rendelesek r LEFT JOIN vasarlok v ON r.vasarlo_id = v.id '
+    const {id} = req.params;
 
 
+    let sql1 = 'SELECT r.id, r.datum , r.statusz, v.id AS vasarlo_id , v.nev, v.email, v.varos, p.nev AS termek, t.db, t.egysegar, (t.db * t.egysegar) AS vegosszeg  FROM rendelesek r LEFT JOIN vasarlok v ON r.vasarlo_id = v.id LEFT JOIN tetelek t ON t.rendeles_id = r.id LEFT JOIN termekek p ON t.termek_id = p.id WHERE r.id = ?'
+
+
+    const [eredmeny] = await pool.query(sql1, [id])
+
+    if(eredmeny.length === 0){
+       return res.status(404).json({error: "A rendelés nem található"})
+        
+    }
+
+    const rendelesek = {
+        id: eredmeny[0].id,
+        datum: eredmeny[0].datum,
+        statusz: eredmeny[0].statusz,
+        vasarlo: {
+            id: eredmeny[0].vasarlo_id,
+            nev: eredmeny[0].nev,
+            email: eredmeny[0].email,
+            varos: eredmeny[0].varos
+        },
+        tetelek: eredmeny.map(t => ({
+            termek: t.termek,
+            db: t.db,
+            egysegar: t.egysegar,
+            osszeg: t.osszeg
+        }))
+    }
+    vegosszeg: eredmeny.reduce((sum,t) => sum + (t.db * t.egysegar), 0)
+
+    res.json(rendelesek)
 })
-
 
 export default router
