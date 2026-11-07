@@ -13,20 +13,19 @@ router.get('/', async(req,res)=>{
 });
 
 router.get('/:id/rendelesek', async(req,res)=>{
-    // kicsit hianyos meg
     const {id} = req.params
 
-    const[vasarlo] = await pool.query('SELECT * FROM vasarlok WHERE id = ?', [id])
+    const[vasarlo] = await pool.query('SELECT id FROM vasarlok WHERE id = ?', [id])
 
     if(vasarlo.length === 0){
         return res.status(404).json({error: 'A vásárló nem található'})
        
     }
 
-    const sql = 'SELECT r.id, r.datum, SUM(t.db * t.egysegar) AS osszeg FROM rendelesek r LEFT JOIN tetelek t ON t.rendeles_id = r.id WHERE r.vasarlo_id = ? GROUP BY r.id ORDER BY r.datum DESC'
-    const [rendelesek] = await pool.query(sql, [id])
+    let sql = 'SELECT r.id, r.datum, SUM(t.db * t.egysegar) AS osszeg FROM rendelesek r LEFT JOIN tetelek t ON t.rendeles_id = r.id WHERE r.vasarlo_id = ? GROUP BY r.id ORDER BY r.datum DESC'
+    const [eredmeny] = await pool.query(sql, [id])
 
-    res.json(rendelesek)
+    res.json(eredmeny)
 })
 
 

@@ -4,6 +4,7 @@ import { Router } from 'express'
 const router = Router();
 
 router.get('/', async(req,res)=>{
+ 
     let sql1 = "SELECT  r.vasarlo_id, v.nev AS vasarlo,  DATE_FORMAT(r.datum,'%Y-%m-%d') AS datum, r.statusz, SUM(t.db) AS darab, SUM(db * egysegar) AS vegosszeg  FROM rendelesek r LEFT JOIN vasarlok v ON r.vasarlo_id = v.id  LEFT JOIN tetelek t ON t.rendeles_id = r.id "
     
 
@@ -42,12 +43,19 @@ router.get('/', async(req,res)=>{
 
     sql1 += " GROUP BY r.id ORDER BY r.datum"
 
+
+    //chatgpt segítségével készült a dátum ellenőrzés, hogy ne lehessen nem létező napot megadni
+    if(tol && new Date (tol + "T00:00:00Z").toString().slice(0,10)!==tol){
+        return res.status(400).json({hiba: "Nem létező nap"})
+    }
+
+    if(ig && new Date (ig + "T00:00:00Z").toString().slice(0,10)!==ig){
+        return res.status(400).json({hiba: "Nem létező nap"})
+    }
+
+
     const [eredmeny] = await pool.query(sql1, params)
     
-    //GET /rendelesek?tol=2026-02-30 kell még
-
-    
-
     res.json(eredmeny);
 })
 
