@@ -5,7 +5,7 @@ const router = Router();
 
 router.get('/', async(req,res)=>{
 
-    let sql1 = 'SELECT v.id, v.nev, v.email, v.varos,  COUNT(DISTINCT r.id) AS rendelesDb, SUM(db * egysegar) AS ossKoltes  FROM vasarlok v LEFT JOIN rendelesek r ON r.vasarlo_id = v.id LEFT JOIN tetelek t ON t.rendeles_id = r.id GROUP BY v.id, v.nev, v.varos ORDER BY ossKoltes DESC'
+    let sql1 = 'SELECT v.id, v.nev, v.varos,  COUNT(DISTINCT r.id) AS rendelesDb, SUM(db * egysegar) AS osszKoltes  FROM vasarlok v LEFT JOIN rendelesek r ON r.vasarlo_id = v.id LEFT JOIN tetelek t ON t.rendeles_id = r.id GROUP BY v.id, v.nev, v.varos ORDER BY osszKoltes DESC'
 
     const [eredmeny] = await pool.query(sql1)
 
