@@ -4,7 +4,13 @@ import { Router } from 'express';
 const router = Router();
 
 router.get('/', async(req,res)=>{
-    let sql = 'SELECT DATE_FORMAT(r.datum,"%Y-%m") AS datum, SUM(t.db) AS rendelesDb, SUM (t.db * t.egysegar) AS bevetel FROM rendelesek r LEFT JOIN tetelek t ON t.rendeles_id = r.id LEFT JOIN termekek te ON te.id = t.termek_id'
+    let sql = `SELECT DATE_FORMAT(r.datum, '%Y-%m') AS honap,COUNT(DISTINCT r.id) AS rendelesDb, SUM(t.db * t.egysegar) AS bevetel
+    FROM rendelesek r
+    LEFT JOIN tetelek t ON t.rendeles_id = r.id
+    WHERE r.statusz != 'törölve'
+    GROUP BY DATE_FORMAT(r.datum, '%Y-%m')
+    ORDER BY honap
+`
 
     const [eredmeny] = await pool.query(sql)
 
@@ -12,9 +18,28 @@ router.get('/', async(req,res)=>{
 })
 
 router.get('/top-termekek', async(req,res)=>{
-    const n = Number(req.query.n) || 3;
+    // hibakezeléshez AI segítségét kértem
+    let n = 3
 
-    let sql = 'SELECT t.nev AS termek, SUM(te.db) AS rendelesDb, SUM(te.db * te.egysegar) AS bevetel FROM termekek t LEFT JOIN tetelek te ON te.termek_id = t.id GROUP BY t.id,t.nev ORDER BY rendelesDb DESC LIMIT ?'
+    if(req.query.n !== undefined){
+        n = Number(req.query.n)
+
+    if(!Number.isInteger(n) || n <= 0){
+       return res.status(400).json({
+            error: "A termék limitnek számnak kell lennie"
+        })
+    }
+}
+
+    let sql = `SELECT t.nev AS termek, SUM(te.db) AS eladottDb, SUM(te.db * te.egysegar) AS bevetel 
+    FROM termekek t 
+    INNER JOIN tetelek te ON te.termek_id = t.id
+    INNER JOIN rendelesek r ON r.id = te.rendeles_id
+    WHERE r.statusz != 'törölve' 
+    GROUP BY t.id, t.nev 
+    ORDER BY eladottDb DESC 
+    LIMIT ?
+`
 
     const [eredmeny] = await pool.query(sql, [n]);
     res.json(eredmeny)
@@ -23,7 +48,14 @@ router.get('/top-termekek', async(req,res)=>{
 
 router.get('/kategoriak', async(req,res)=>{
 
-    let sql = 'SELECT t.kategoria, SUM(te.db) AS eladottDb, SUM(te.db * te.egysegar) AS bevetel FROM termekek t LEFT JOIN tetelek te ON te.termek_id = t.id GROUP BY t.kategoria'
+    let sql = `SELECT t.kategoria, SUM(te.db) AS eladottDb, SUM(te.db * te.egysegar) AS bevetel 
+    FROM termekek t 
+    INNER JOIN tetelek te ON te.termek_id = t.id
+    INNER JOIN rendelesek r ON r.id = te.rendeles_id
+    WHERE r.statusz != 'törölve' 
+    GROUP BY t.kategoria
+    ORDER BY bevetel DESC
+`
 
     const [eredmeny] = await pool.query(sql)
 
